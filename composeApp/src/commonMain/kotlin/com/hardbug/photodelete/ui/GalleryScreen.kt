@@ -9,12 +9,16 @@ import com.hardbug.photodelete.GalleryRepository
 import com.hardbug.photodelete.PermissionsHelper
 import com.hardbug.photodelete.enums.GalleryPermission
 import com.hardbug.photodelete.models.GalleryPhoto
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun GalleryScreen(
     permissionsHelper: PermissionsHelper,
-    repository: GalleryRepository
+    repository: GalleryRepository,
+    onDeleteRequest: (GalleryPhoto) -> Unit
 ) {
     var photos by remember { mutableStateOf<List<GalleryPhoto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -26,8 +30,13 @@ fun GalleryScreen(
         hasPermission = permissionsHelper.hasPermission(GalleryPermission.READ)
 
         if (hasPermission) {
-            photos = repository.loadPhotos()
-            isLoading = false
+            withContext(Dispatchers.IO) {
+                val loaded = repository.loadPhotos()
+                withContext(Dispatchers.Main) {
+                    photos = loaded
+                    isLoading = false
+                }
+            }
         } else {
             isLoading = false
             showPermissionRationale = true
@@ -52,8 +61,13 @@ fun GalleryScreen(
                                 hasPermission = true
                                 showPermissionRationale = false
                                 isLoading = true
-                                photos = repository.loadPhotos()
-                                isLoading = false
+                                withContext(Dispatchers.IO) {
+                                    val loaded = repository.loadPhotos()
+                                    withContext(Dispatchers.Main) {
+                                        photos = loaded
+                                        isLoading = false
+                                    }
+                                }
                             }
                         }
                     },
@@ -70,7 +84,11 @@ fun GalleryScreen(
             else -> {
                 PhotoViewer(
                     photos = photos,
-                    repository = repository
+                    repository = repository,
+                    onDelete = { photo ->
+                        onDeleteRequest(photo)
+                        photos = photos.filter { it.id != photo.id }
+                    }
                 )
             }
         }

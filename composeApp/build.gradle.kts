@@ -47,6 +47,7 @@ kotlin {
             implementation(libs.coil3.coil.compose)
             implementation(libs.coil.network.ktor3)
             implementation(compose.materialIconsExtended)
+            implementation(libs.androidx.exifinterface)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

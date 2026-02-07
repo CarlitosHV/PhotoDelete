@@ -1,6 +1,7 @@
 package com.hardbug.photodelete
 
 import com.hardbug.photodelete.models.GalleryPhoto
+import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSSortDescriptor
 import platform.Photos.PHAsset
 import platform.Photos.PHAssetChangeRequest
@@ -26,14 +27,20 @@ actual class GalleryRepository {
             fetchOptions
         )
 
+        val dateFormatter = NSDateFormatter().apply {
+            dateFormat = "dd/MM/yyyy"
+        }
+
         for (i in 0 until fetchResult.count.toInt()) {
             val asset = fetchResult.objectAtIndex(i.toULong()) as PHAsset
             val localIdentifier = asset.localIdentifier
+            val creationDate = asset.creationDate?.let { dateFormatter.stringFromDate(it) }
 
             photos.add(GalleryPhoto(
                 id = localIdentifier,
                 uri = localIdentifier,
-                thumbnailUri = localIdentifier
+                thumbnailUri = localIdentifier,
+                creationDate = creationDate
             ))
         }
 
